@@ -73,9 +73,14 @@
 .panel{background:var(--surface);border-radius:16px;padding:20px;border:1px solid var(--sel-border)}
 
 /* Action buttons row */
-.action-row{display:flex;gap:8px;margin-bottom:16px}
+.action-row{display:flex;gap:8px;margin-bottom:8px}
 .act-btn{flex:1;background:none;border:1px solid var(--sel-border);color:var(--text-muted);font-size:0.75rem;padding:8px 10px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}
 .act-btn:active{background:rgba(248,113,113,.15);border-color:var(--danger);color:var(--danger)}
+
+/* Weekday buttons */
+.weekday-row{display:flex;gap:6px;margin-bottom:16px}
+.wd-btn{flex:1;background:none;border:1px solid var(--sel-border);color:var(--text-dim);font-size:0.72rem;padding:7px 4px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;text-align:center}
+.wd-btn:active{background:rgba(5,150,105,.2);border-color:var(--office);color:var(--office)}
 
 /* Confirm row */
 .confirm-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px}
@@ -261,6 +266,10 @@
       h+='<button class="act-btn" onclick="W.fillOffice()">\uD83C\uDFE2 All Office</button>';
       h+='<button class="act-btn" onclick="W.startReset()">Reset Month</button>';
       h+='</div>';
+      h+='<div class="weekday-row">';
+      var wdNames=['Mon','Tue','Wed','Thu','Fri'];
+      for(var wi=0;wi<5;wi++) h+='<button class="wd-btn" onclick="W.fillWeekday('+(wi+1)+')">'+wdNames[wi]+'</button>';
+      h+='</div>';
     }
 
     // Rate bar
@@ -326,6 +335,14 @@
     }
     save();render();
   }
+  function fillWeekday(dow){
+    var total=daysIn(cy,cm);
+    for(var d=1;d<=total;d++){
+      var key=dk(cy,cm,d);
+      if(new Date(cy,cm,d).getDay()===dow&&!isHol(key)) data[key]='office';
+    }
+    save();render();
+  }
   function startReset(){confirming=true;render();}
   function doReset(){
     var total=daysIn(cy,cm);
@@ -334,7 +351,7 @@
   }
   function cancelReset(){confirming=false;render();}
 
-  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,startReset:startReset,doReset:doReset,cancelReset:cancelReset};
+  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,fillWeekday:fillWeekday,startReset:startReset,doReset:doReset,cancelReset:cancelReset};
   load();render();
 })();
 </script>
