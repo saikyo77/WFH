@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WFH Tracker">
+<meta name="theme-color" content="#111827">
+<title>WFH Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#111827; --surface:#1f2937; --surface-hover:#374151;
+    --text:#f3f4f6; --text-dim:#9ca3af; --text-muted:#6b7280;
+    --office:#059669; --wfh:#6366f1; --off:#4b5563;
+    --sel-bg:#1f2937; --sel-border:#374151;
+    --today:#22d3ee; --accent:#22d3ee; --danger:#f87171; --success:#34d399;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden}
+  .app{max-width:480px;margin:0 auto;padding:16px 12px 40px}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 20px}
+.month-title{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;letter-spacing:-0.5px}
+.nav-btn{background:var(--surface);border:1px solid var(--sel-border);color:var(--text);width:42px;height:42px;border-radius:10px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.nav-btn:active{background:var(--surface-hover)}
+
+/* Legend */
+.legend{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-dim);background:var(--surface);padding:5px 10px;border-radius:8px;font-weight:500}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.tap-hint{text-align:center;font-size:0.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic}
+
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:24px}
+.day-hdr{text-align:center;font-size:0.68rem;font-weight:600;color:var(--text-muted);padding:2px 0 8px;text-transform:uppercase;letter-spacing:0.5px}
+.day-hdr.wknd{color:#5eead4;opacity:.7}
+
+.day-cell{aspect-ratio:1/1.1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:2px solid transparent;transition:transform 0.1s;position:relative;min-height:50px;user-select:none;overflow:visible}
+.day-cell:active{transform:scale(0.92)}
+.day-num{font-family:'JetBrains Mono',monospace;font-size:0.92rem;font-weight:700;line-height:1}
+.day-lbl{font-size:0.52rem;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;line-height:1;opacity:.9}
+
+.day-cell.sel{background:var(--sel-bg);border-color:var(--sel-border)}
+.day-cell.sel .day-lbl{color:var(--text-muted)}
+.day-cell.office{background:var(--office)}
+.day-cell.wfh{background:var(--wfh)}
+.day-cell.off{background:var(--off)}
+.day-cell.is-today{border-color:var(--today)!important;box-shadow:0 0 12px rgba(34,211,238,.3)}
+.day-cell.faded{opacity:.3}
+.day-cell.hol-dot::after{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:#f59e0b}
+.day-cell.hol-active{border-color:#f59e0b!important;box-shadow:0 0 10px rgba(245,158,11,.35)}
+
+/* Holiday popup */
+.hol-popup{position:absolute;bottom:calc(100% + 6px);background:#1c1917;border:1px solid #f59e0b;border-radius:8px;padding:6px 9px;white-space:nowrap;z-index:100;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.5);animation:popIn .15s ease}
+.hol-popup.anc-left{left:0}
+.hol-popup.anc-right{right:0}
+.hol-popup.anc-mid{left:50%;transform:translateX(-50%)}
+.hol-popup::after{content:'';position:absolute;top:100%;border:5px solid transparent;border-top-color:#f59e0b}
+.hol-popup.anc-left::after{left:10px}
+.hol-popup.anc-right::after{right:10px}
+.hol-popup.anc-mid::after{left:50%;transform:translateX(-50%)}
+.hol-name{font-size:0.68rem;font-weight:700;color:#fbbf24;line-height:1.3}
+.hol-hint{font-size:0.58rem;color:#a78bfa;margin-top:2px}
+
+/* Stats panel */
+.panel{background:var(--surface);border-radius:16px;padding:20px;border:1px solid var(--sel-border)}
+
+/* Action buttons row */
+.action-row{display:flex;gap:8px;margin-bottom:16px}
+.act-btn{flex:1;background:none;border:1px solid var(--sel-border);color:var(--text-muted);font-size:0.75rem;padding:8px 10px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}
+.act-btn:active{background:rgba(248,113,113,.15);border-color:var(--danger);color:var(--danger)}
+
+/* Confirm row */
+.confirm-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px}
+.confirm-msg{font-size:0.78rem;color:var(--danger);font-weight:500}
+.confirm-yes{background:var(--danger);border:none;color:#fff;font-size:0.75rem;padding:7px 16px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600}
+.confirm-no{background:none;border:1px solid var(--sel-border);color:var(--text-muted);font-size:0.75rem;padding:7px 16px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}
+
+/* Rate bar */
+.rate-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.rate-title{font-size:0.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600}
+.target-row{display:flex;align-items:center;gap:6px}
+.target-lbl{font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.target-input{background:var(--bg);border:1px solid var(--sel-border);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;width:48px;padding:4px;border-radius:8px;text-align:center;outline:none}
+.target-input:focus{border-color:var(--accent)}
+.bar-wrap{background:var(--bg);border-radius:8px;height:34px;position:relative;overflow:hidden}
+.bar{height:100%;border-radius:8px;transition:width .4s ease;display:flex;align-items:center;min-width:0}
+.bar.met{background:linear-gradient(90deg,var(--office),#10b981)}
+.bar.fail{background:linear-gradient(90deg,#dc2626,#f87171)}
+.bar-txt{font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:700;color:#fff;white-space:nowrap;padding:0 8px}
+.target-line{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:2}
+.target-line-lbl{position:absolute;top:-18px;transform:translateX(-50%);font-size:0.6rem;color:var(--accent);font-family:'JetBrains Mono',monospace;font-weight:700;white-space:nowrap}
+.rate-status{text-align:center;margin-top:10px;font-size:0.82rem;font-weight:600}
+.rate-status.met{color:var(--success)}
+.rate-status.fail{color:var(--danger)}
+
+/* Stat rows */
+.divider{border-top:1px solid rgba(255,255,255,.1);margin:16px 0}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0}
+.stat-row+.stat-row{border-top:1px solid rgba(255,255,255,.05)}
+.stat-lbl{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--text-dim);font-weight:500}
+.stat-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700}
+
+@keyframes popIn{from{opacity:0;transform:translateX(-50%) scale(.9)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.panel{animation:fadeUp .3s ease}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+(function(){
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var STATES = ['sel','office','wfh','off'];
+  var HOL_STATES = ['office','wfh','off'];
+  var LABELS = {sel:'\u2013',office:'Office',wfh:'WFH',off:'Off'};
+
+  var HOLIDAYS = {
+    '2025-01-01':"New Year's Day",'2025-01-27':'Australia Day',
+    '2025-04-18':'Good Friday','2025-04-19':'Easter Saturday',
+    '2025-04-20':'Easter Sunday','2025-04-21':'Easter Monday',
+    '2025-04-25':'Anzac Day','2025-06-09':"King's Birthday",
+    '2025-10-06':'Labour Day','2025-12-25':'Christmas Day','2025-12-26':'Boxing Day',
+    '2026-01-01':"New Year's Day",'2026-01-26':'Australia Day',
+    '2026-04-03':'Good Friday','2026-04-04':'Easter Saturday',
+    '2026-04-05':'Easter Sunday','2026-04-06':'Easter Monday',
+    '2026-04-25':'Anzac Day','2026-04-27':'Anzac Day (Additional)',
+    '2026-06-08':"King's Birthday",'2026-10-05':'Labour Day',
+    '2026-12-25':'Christmas Day','2026-12-26':'Boxing Day','2026-12-28':'Boxing Day (Additional)',
+    '2027-01-01':"New Year's Day",'2027-01-26':'Australia Day',
+    '2027-03-26':'Good Friday','2027-03-27':'Easter Saturday',
+    '2027-03-28':'Easter Sunday','2027-03-29':'Easter Monday',
+    '2027-04-25':'Anzac Day','2027-04-26':'Anzac Day (Additional)',
+    '2027-06-14':"King's Birthday",'2027-10-04':'Labour Day',
+    '2027-12-25':'Christmas Day','2027-12-26':'Boxing Day',
+    '2027-12-27':'Christmas Day (Additional)','2027-12-28':'Boxing Day (Additional)'
+  };
+
+  var today = new Date();
+  var cy = today.getFullYear();
+  var cm = today.getMonth();
+  var data = {};
+  var target = 50;
+  var confirming = false;
+  var popupKey = null;
+
+  function load(){
+    try{var r=localStorage.getItem('wfh_v2');if(r){var p=JSON.parse(r);data=p.data||{};target=p.target||50;}}catch(e){}
+  }
+  function save(){
+    try{localStorage.setItem('wfh_v2',JSON.stringify({data:data,target:target}));}catch(e){}
+  }
+
+  function dk(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d);}
+  function pad(n){return n<10?'0'+n:String(n);}
+  function daysIn(y,m){return new Date(y,m+1,0).getDate();}
+  function startDow(y,m){var d=new Date(y,m,1).getDay();return d===0?6:d-1;}
+  function isToday(y,m,d){return y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();}
+  function isWknd(y,m,d){var w=new Date(y,m,d).getDay();return w===0||w===6;}
+  function isHol(key){return HOLIDAYS.hasOwnProperty(key);}
+  function colOf(y,m,d){var w=new Date(y,m,d).getDay();return w===0?6:w-1;}
+
+  function getState(key,y,m,d){
+    if(data.hasOwnProperty(key)) return data[key];
+    if(isWknd(y,m,d)||isHol(key)) return 'off';
+    return 'sel';
+  }
+
+  function cell(key,y,m,d,faded){
+    var st=getState(key,y,m,d);
+    var hol=isHol(key);
+    var cls='day-cell '+st;
+    if(faded) cls+=' faded';
+    if(isToday(y,m,d)) cls+=' is-today';
+    if(hol) cls+=' hol-dot';
+    if(hol&&popupKey===key) cls+=' hol-active';
+
+    var out='<div class="'+cls+'" onclick="W.tap(\''+key+'\','+y+','+m+','+d+')">';
+    out+='<div class="day-num">'+d+'</div>';
+    out+='<div class="day-lbl">'+LABELS[st]+'</div>';
+    if(hol&&popupKey===key){
+      var col=colOf(y,m,d);
+      var anc=col<=1?'anc-left':col>=5?'anc-right':'anc-mid';
+      out+='<div class="hol-popup '+anc+'">';
+      out+='<div class="hol-name">'+HOLIDAYS[key]+'</div>';
+      out+='<div class="hol-hint">Tap again to set status</div>';
+      out+='</div>';
+    }
+    out+='</div>';
+    return out;
+  }
+
+  function render(){
+    var total=daysIn(cy,cm);
+    var start=startDow(cy,cm);
+
+    var wfhC=0,officeC=0,offC=0,unsetC=0;
+    for(var d=1;d<=total;d++){
+      var st=getState(dk(cy,cm,d),cy,cm,d);
+      if(st==='wfh') wfhC++;
+      else if(st==='office') officeC++;
+      else if(st==='off') offC++;
+      else unsetC++;
+    }
+    var working=officeC+wfhC+unsetC;
+    var rate=working>0?(officeC/working)*100:0;
+    var met=rate>=target;
+
+    var h='';
+
+    // Header
+    h+='<div class="header">';
+    h+='<button class="nav-btn" onclick="W.prev()">\u2039</button>';
+    h+='<div class="month-title">'+MONTHS[cm]+' '+cy+'</div>';
+    h+='<button class="nav-btn" onclick="W.next()">\u203A</button>';
+    h+='</div>';
+
+    // Legend
+    h+='<div class="legend">';
+    h+='<div class="legend-item"><div class="legend-dot" style="background:var(--office)"></div>Office</div>';
+    h+='<div class="legend-item"><div class="legend-dot" style="background:var(--wfh)"></div>WFH</div>';
+    h+='<div class="legend-item"><div class="legend-dot" style="background:var(--off)"></div>Off</div>';
+    h+='<div class="legend-item"><div class="legend-dot" style="background:#f59e0b;border-radius:50%"></div>Public Holiday</div>';
+    h+='</div>';
+    h+='<div class="tap-hint">Tap a day to cycle: Office \u2192 WFH \u2192 Off</div>';
+
+    // Calendar
+    h+='<div class="cal-grid">';
+    for(var i=0;i<7;i++) h+='<div class="day-hdr'+(i>=5?' wknd':'')+'">'+DAY_NAMES[i]+'</div>';
+
+    var pm=cm===0?11:cm-1, py=cm===0?cy-1:cy;
+    var pd=daysIn(py,pm);
+    for(var i=0;i<start;i++){var dd=pd-start+1+i;h+=cell(dk(py,pm,dd),py,pm,dd,true);}
+    for(var d=1;d<=total;d++){h+=cell(dk(cy,cm,d),cy,cm,d,false);}
+    var rem=(start+total)%7===0?0:7-(start+total)%7;
+    var nm=cm===11?0:cm+1, ny=cm===11?cy+1:cy;
+    for(var i=1;i<=rem;i++){h+=cell(dk(ny,nm,i),ny,nm,i,true);}
+    h+='</div>';
+
+    // Panel
+    h+='<div class="panel">';
+
+    // Action buttons or confirm
+    if(confirming){
+      h+='<div class="confirm-row">';
+      h+='<span class="confirm-msg">Reset this month?</span>';
+      h+='<button class="confirm-yes" onclick="W.doReset()">Yes, Reset</button>';
+      h+='<button class="confirm-no" onclick="W.cancelReset()">Cancel</button>';
+      h+='</div>';
+    } else {
+      h+='<div class="action-row">';
+      h+='<button class="act-btn" onclick="W.fillOffice()">\uD83C\uDFE2 All Office</button>';
+      h+='<button class="act-btn" onclick="W.startReset()">Reset Month</button>';
+      h+='</div>';
+    }
+
+    // Rate bar
+    h+='<div class="rate-header">';
+    h+='<div class="rate-title">Attendance Rate</div>';
+    h+='<div class="target-row"><span class="target-lbl">Target</span>';
+    h+='<input class="target-input" type="number" min="0" max="100" inputmode="numeric" value="'+target+'" onchange="W.setTarget(this.value)">';
+    h+='<span class="target-lbl">%</span></div>';
+    h+='</div>';
+    h+='<div class="bar-wrap">';
+    h+='<div class="target-line" style="left:'+target+'%"><div class="target-line-lbl">'+target+'%</div></div>';
+    var bw=working>0?Math.max(Math.min(rate,100),5):0;
+    h+='<div class="bar '+(met?'met':'fail')+'" style="width:'+bw+'%"><span class="bar-txt">'+rate.toFixed(1)+'%</span></div>';
+    h+='</div>';
+    if(working>0){
+      h+='<div class="rate-status '+(met?'met':'fail')+'">';
+      if(met){h+='\u2713 Target met! '+rate.toFixed(1)+'% in office';}
+      else{var nd=Math.max(0,Math.ceil(target/100*working)-officeC);h+='\u2717 '+nd+' more office day'+(nd!==1?'s':'')+' to reach '+target+'%';}
+      h+='</div>';
+    }
+
+    // Divider + stats
+    h+='<div class="divider"></div>';
+    h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--office)"></span>In Office</span><span class="stat-val" style="color:var(--office)">'+officeC+'</span></div>';
+    h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--wfh)"></span>WFH</span><span class="stat-val" style="color:var(--wfh)">'+wfhC+'</span></div>';
+    h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--off)"></span>Non-Working</span><span class="stat-val" style="color:var(--text-muted)">'+offC+'</span></div>';
+    if(unsetC>0) h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--sel-border)"></span>Unassigned</span><span class="stat-val" style="color:var(--text-muted)">'+unsetC+'</span></div>';
+    h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--accent)"></span>Working Days</span><span class="stat-val" style="color:var(--accent)">'+working+'</span></div>';
+    h+='</div>';
+
+    document.getElementById('app').innerHTML=h;
+  }
+
+  function tap(key,y,m,d){
+    var hol=isHol(key);
+    if(hol){
+      if(!data.hasOwnProperty(key)&&popupKey!==key){
+        popupKey=key; render(); return;
+      }
+      popupKey=null;
+      var cur=getState(key,y,m,d);
+      var idx=HOL_STATES.indexOf(cur);
+      var nxt=HOL_STATES[(idx+1)%HOL_STATES.length];
+      if(nxt==='off'){delete data[key];}else{data[key]=nxt;}
+    } else {
+      popupKey=null;
+      var cur=getState(key,y,m,d);
+      var idx=STATES.indexOf(cur);
+      var nxt=STATES[(idx+1)%STATES.length];
+      if(nxt==='sel'){delete data[key];}else{data[key]=nxt;}
+    }
+    save(); render();
+  }
+
+  function prev(){popupKey=null;if(cm===0){cm=11;cy--;}else cm--;render();}
+  function next(){popupKey=null;if(cm===11){cm=0;cy++;}else cm++;render();}
+  function setTarget(v){target=Math.max(0,Math.min(100,parseInt(v,10)||50));save();render();}
+  function fillOffice(){
+    var total=daysIn(cy,cm);
+    for(var d=1;d<=total;d++){
+      var key=dk(cy,cm,d);
+      if(!isWknd(cy,cm,d)&&!isHol(key)) data[key]='office';
+    }
+    save();render();
+  }
+  function startReset(){confirming=true;render();}
+  function doReset(){
+    var total=daysIn(cy,cm);
+    for(var d=1;d<=total;d++) delete data[dk(cy,cm,d)];
+    confirming=false;save();render();
+  }
+  function cancelReset(){confirming=false;render();}
+
+  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,startReset:startReset,doReset:doReset,cancelReset:cancelReset};
+  load();render();
+})();
+</script>
+</body>
+</html>
