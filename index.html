@@ -79,8 +79,9 @@
 
 /* Weekday buttons */
 .weekday-row{display:flex;gap:6px;margin-bottom:16px}
-.wd-btn{flex:1;background:none;border:1px solid var(--sel-border);color:var(--text-dim);font-size:0.72rem;padding:7px 4px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;text-align:center}
-.wd-btn:active{background:rgba(5,150,105,.2);border-color:var(--office);color:var(--office)}
+.wd-btn{flex:1;background:none;border:1px solid var(--sel-border);color:var(--text-dim);font-size:0.72rem;padding:7px 4px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;text-align:center;transition:background .15s,border-color .15s,color .15s}
+.wd-btn:active{opacity:.7}
+.wd-btn.wd-on{background:rgba(5,150,105,.25);border-color:var(--office);color:var(--office)}
 
 /* Confirm row */
 .confirm-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px}
@@ -268,7 +269,19 @@
       h+='</div>';
       h+='<div class="weekday-row">';
       var wdNames=['Mon','Tue','Wed','Thu','Fri'];
-      for(var wi=0;wi<5;wi++) h+='<button class="wd-btn" onclick="W.fillWeekday('+(wi+1)+')">'+wdNames[wi]+'</button>';
+      for(var wi=0;wi<5;wi++){
+        var dow=wi+1;
+        var allOn=true;
+        var hasAny=false;
+        for(var d=1;d<=total;d++){
+          if(new Date(cy,cm,d).getDay()===dow&&!isHol(dk(cy,cm,d))){
+            hasAny=true;
+            if(getState(dk(cy,cm,d),cy,cm,d)!=='office'){allOn=false;}
+          }
+        }
+        var cls='wd-btn'+(hasAny&&allOn?' wd-on':'');
+        h+='<button class="'+cls+'" onclick="W.fillWeekday('+dow+')">'+wdNames[wi]+'</button>';
+      }
       h+='</div>';
     }
 
