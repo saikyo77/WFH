@@ -337,9 +337,19 @@
   }
   function fillWeekday(dow){
     var total=daysIn(cy,cm);
+    // check if all matching weekdays are already office
+    var allOffice=true;
     for(var d=1;d<=total;d++){
       var key=dk(cy,cm,d);
-      if(new Date(cy,cm,d).getDay()===dow&&!isHol(key)) data[key]='office';
+      if(new Date(cy,cm,d).getDay()===dow&&!isHol(key)){
+        if(getState(key,cy,cm,d)!=='office'){allOffice=false;break;}
+      }
+    }
+    for(var d=1;d<=total;d++){
+      var key=dk(cy,cm,d);
+      if(new Date(cy,cm,d).getDay()===dow&&!isHol(key)){
+        if(allOffice) delete data[key]; else data[key]='office';
+      }
     }
     save();render();
   }
