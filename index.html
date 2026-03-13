@@ -159,8 +159,23 @@
   var confirming = false;
   var popupKey = null;
 
+  var VALID_STATES={office:1,wfh:1,off:1};
+  var DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
   function load(){
-    try{var r=localStorage.getItem('wfh_v2');if(r){var p=JSON.parse(r);data=p.data||{};target=p.target||50;}}catch(e){}
+    try{
+      var r=localStorage.getItem('wfh_v2');
+      if(r){
+        var p=JSON.parse(r);
+        // Validate target is an integer 0–100
+        var t=parseInt(p.target,10);
+        target=(isFinite(t)&&t>=0&&t<=100)?t:50;
+        // Validate each key is a date string and each value is a known state
+        var raw=p.data||{};
+        for(var k in raw){
+          if(DATE_RE.test(k)&&VALID_STATES[raw[k]]) data[k]=raw[k];
+        }
+      }
+    }catch(e){}
   }
   function save(){
     try{localStorage.setItem('wfh_v2',JSON.stringify({data:data,target:target}));}catch(e){}
