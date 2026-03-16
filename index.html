@@ -128,7 +128,7 @@
   var DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   var STATES = ['sel','office','wfh','off'];
   var HOL_STATES = ['office','wfh','off'];
-  var LABELS = {sel:'\u2013',office:'Office',wfh:'WFH',off:'Off'};
+  var LABELS = {sel:'Select',office:'Office',wfh:'WFH',off:'Off'};
 
   var HOLIDAYS = {
     '2025-01-01':"New Year's Day",'2025-01-27':'Australia Day',
@@ -252,7 +252,7 @@
     h+='<div class="legend-item"><div class="legend-dot" style="background:var(--off)"></div>Off</div>';
     h+='<div class="legend-item"><div class="legend-dot" style="background:#f59e0b;border-radius:50%"></div>Public Holiday</div>';
     h+='</div>';
-    h+='<div class="tap-hint">Tap a day to cycle: Office \u2192 WFH \u2192 Off</div>';
+    h+='<div class="tap-hint">Tap a day to cycle: Select \u2192 Office \u2192 WFH \u2192 Off</div>';
 
     // Calendar
     h+='<div class="cal-grid">';
@@ -324,7 +324,7 @@
     h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--office)"></span>In Office</span><span class="stat-val" style="color:var(--office)">'+officeC+'</span></div>';
     h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--wfh)"></span>WFH</span><span class="stat-val" style="color:var(--wfh)">'+wfhC+'</span></div>';
     h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--off)"></span>Non-Working</span><span class="stat-val" style="color:var(--text-muted)">'+offC+'</span></div>';
-    if(unsetC>0) h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--sel-border)"></span>Unassigned</span><span class="stat-val" style="color:var(--text-muted)">'+unsetC+'</span></div>';
+    if(unsetC>0) h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--sel-border)"></span>Select</span><span class="stat-val" style="color:var(--text-muted)">'+unsetC+'</span></div>';
     h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--accent)"></span>Working Days</span><span class="stat-val" style="color:var(--accent)">'+working+'</span></div>';
     h+='</div>';
 
