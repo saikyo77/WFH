@@ -26,7 +26,12 @@
   .app{max-width:480px;margin:0 auto;padding:16px 12px 40px}
 
 /* Header */
-.header{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 20px}
+.header{position:relative;display:flex;align-items:center;justify-content:space-between;padding:8px 4px 20px}
+.install-btn{position:absolute;top:8px;right:54px;background:none;border:1.5px solid #3b82f6;color:#3b82f6;width:34px;height:34px;border-radius:9px;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0}
+.install-btn:active{background:rgba(59,130,246,.15)}
+.install-tip{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#0c1a2e;border:1px solid #3b82f6;border-radius:14px;padding:14px 20px 12px;text-align:center;font-size:0.73rem;color:#93c5fd;max-width:272px;width:90%;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.7);animation:fadeUp .25s ease}
+.install-tip b{color:#fff;display:block;margin-bottom:6px;font-size:0.8rem}
+.install-tip-close{position:absolute;top:7px;right:10px;background:none;border:none;color:#60a5fa;font-size:1.1rem;cursor:pointer;line-height:1;padding:0}
 .month-title{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;letter-spacing:-0.5px}
 .nav-btn{background:var(--surface);border:1px solid var(--sel-border);color:var(--text);width:42px;height:42px;border-radius:10px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .nav-btn:active{background:var(--surface-hover)}
@@ -158,6 +163,9 @@
   var target = 50;
   var confirming = false;
   var popupKey = null;
+  var deferredInstall = null;
+  var installable = false;
+  var showTip = false;
 
   var VALID_STATES={office:1,wfh:1,off:1};
   var DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
@@ -243,7 +251,20 @@
     h+='<button class="nav-btn" onclick="W.prev()">\u2039</button>';
     h+='<div class="month-title">'+MONTHS[cm]+' '+cy+'</div>';
     h+='<button class="nav-btn" onclick="W.next()">\u203A</button>';
+    // Install button — absolutely positioned, no layout impact
+    var ibStyle=installable?'display:flex':'display:none';
+    h+='<button class="install-btn" onclick="W.install()" title="Add to Home Screen" style="'+ibStyle+'">';
+    h+='<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 1v7.5M4.5 5.5l3 3 3-3M1.5 10.5v1.5a1 1 0 001 1h10a1 1 0 001-1v-1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    h+='</button>';
     h+='</div>';
+    // iOS install tip
+    if(showTip){
+      h+='<div class="install-tip">';
+      h+='<button class="install-tip-close" onclick="W.closeTip()">&#x2715;</button>';
+      h+='<b>Add to Home Screen</b>';
+      h+='Tap the Share button \uD83D\uDCE4 below, then choose <em>Add to Home Screen</em>';
+      h+='</div>';
+    }
 
     // Legend
     h+='<div class="legend">';
@@ -389,8 +410,29 @@
   }
   function cancelReset(){confirming=false;render();}
 
-  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,fillWeekday:fillWeekday,startReset:startReset,doReset:doReset,cancelReset:cancelReset};
-  load();render();
+  function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;}
+  function install(){
+    if(deferredInstall){
+      deferredInstall.prompt();
+      deferredInstall.userChoice.then(function(){deferredInstall=null;installable=false;render();});
+    } else {
+      showTip=!showTip; render();
+    }
+  }
+  function closeTip(){showTip=false;render();}
+
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault(); deferredInstall=e; installable=true; render();
+  });
+  window.addEventListener('appinstalled',function(){
+    deferredInstall=null; installable=false; showTip=false; render();
+  });
+
+  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,fillWeekday:fillWeekday,startReset:startReset,doReset:doReset,cancelReset:cancelReset,install:install,closeTip:closeTip};
+  load();
+  // Show button on iOS Safari when not already installed
+  if(isIOS()&&!navigator.standalone) installable=true;
+  render();
 })();
 </script>
 </body>
