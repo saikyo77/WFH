@@ -83,6 +83,7 @@
 .action-row{display:flex;gap:8px;margin-bottom:8px}
 .act-btn{flex:1;background:none;border:1px solid var(--sel-border);color:var(--text-muted);font-size:0.75rem;padding:8px 10px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}
 .act-btn:active{background:rgba(248,113,113,.15);border-color:var(--danger);color:var(--danger)}
+.act-btn.act-on{background:rgba(5,150,105,.25);border-color:var(--office);color:var(--office)}
 
 /* Weekday buttons */
 .weekday-row{display:flex;gap:6px;margin-bottom:16px}
@@ -304,7 +305,9 @@
       h+='</div>';
     } else {
       h+='<div class="action-row">';
-      h+='<button class="act-btn" onclick="W.fillOffice()">\uD83C\uDFE2 All Office</button>';
+      var allOfficeMth=true,hasWd=false;
+      for(var d=1;d<=total;d++){if(!isWknd(cy,cm,d)&&!isHol(dk(cy,cm,d))){hasWd=true;if(getState(dk(cy,cm,d),cy,cm,d)!=='office'){allOfficeMth=false;}}}
+      h+='<button class="act-btn'+(hasWd&&allOfficeMth?' act-on':'')+'" onclick="W.fillOffice()">\uD83C\uDFE2 All Office</button>';
       h+='<button class="act-btn" onclick="W.startReset()">Reset Month</button>';
       h+='</div>';
       h+='<div class="weekday-row">';
@@ -382,9 +385,18 @@
   function setTarget(v){target=Math.max(0,Math.min(100,parseInt(v,10)||50));save();render();}
   function fillOffice(){
     var total=daysIn(cy,cm);
+    var allOffice=true;
     for(var d=1;d<=total;d++){
       var key=dk(cy,cm,d);
-      if(!isWknd(cy,cm,d)&&!isHol(key)) data[key]='office';
+      if(!isWknd(cy,cm,d)&&!isHol(key)){
+        if(getState(key,cy,cm,d)!=='office'){allOffice=false;break;}
+      }
+    }
+    for(var d=1;d<=total;d++){
+      var key=dk(cy,cm,d);
+      if(!isWknd(cy,cm,d)&&!isHol(key)){
+        if(allOffice) delete data[key]; else data[key]='office';
+      }
     }
     save();render();
   }
