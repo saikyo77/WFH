@@ -22,7 +22,9 @@
     --today:#22d3ee; --accent:#22d3ee; --danger:#f87171; --success:#34d399;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden}
+  body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;overscroll-behavior-y:contain}
+  #ptr{position:fixed;top:-48px;left:50%;transform:translateX(-50%);width:36px;height:36px;background:var(--surface);border:1.5px solid var(--sel-border);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:400;opacity:0;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.4);transition:border-color .15s}
+  #ptr.ptr-ready{border-color:var(--accent)}
   .app{max-width:480px;margin:0 auto;padding:16px 12px 40px}
 
 /* Header */
@@ -127,6 +129,7 @@
 </style>
 </head>
 <body>
+<div id="ptr"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.5 8a5.5 5.5 0 11-1.1-3.3" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/><path d="M10.5 4.5l1.9.2.2-1.9" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 <div class="app" id="app"></div>
 <script>
 (function(){
@@ -434,6 +437,40 @@
   // Show button on iOS Safari when not already installed
   if(isIOS()&&!navigator.standalone) installable=true;
   render();
+})();
+</script>
+<script>
+(function(){
+  var ptr=document.getElementById('ptr');
+  var startY=0,dist=0,pulling=false,THRESH=65,refreshing=false;
+  document.addEventListener('touchstart',function(e){
+    if(window.scrollY===0&&!refreshing){startY=e.touches[0].clientY;pulling=true;}
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(!pulling) return;
+    dist=Math.max(0,e.touches[0].clientY-startY);
+    var p=Math.min(dist/THRESH,1);
+    ptr.style.top=(dist*0.38-46)+'px';
+    ptr.style.opacity=p;
+    ptr.querySelector('svg').style.transform='rotate('+(p*270)+'deg)';
+    if(dist>=THRESH) ptr.classList.add('ptr-ready'); else ptr.classList.remove('ptr-ready');
+  },{passive:true});
+  document.addEventListener('touchend',function(){
+    if(!pulling) return;
+    pulling=false;
+    if(dist>=THRESH){
+      refreshing=true;
+      ptr.querySelector('svg').style.transition='transform .4s ease';
+      ptr.querySelector('svg').style.transform='rotate(360deg)';
+      setTimeout(function(){location.reload();},350);
+    } else {
+      ptr.style.transition='top .3s,opacity .3s';
+      ptr.style.top='-48px';
+      ptr.style.opacity='0';
+      setTimeout(function(){ptr.style.transition='';},300);
+    }
+    dist=0;
+  });
 })();
 </script>
 </body>
