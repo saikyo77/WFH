@@ -37,7 +37,6 @@
 .month-title{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;letter-spacing:-0.5px}
 .nav-btn{background:var(--surface);border:1px solid var(--sel-border);color:var(--text);width:42px;height:42px;border-radius:10px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .nav-btn:active{background:var(--surface-hover)}
-.hdr-left{display:flex;align-items:center;gap:6px}
 .icon-btn{background:var(--surface);border:1px solid var(--sel-border);color:var(--text);width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:opacity .15s}
 .icon-btn:active{background:var(--surface-hover)}
 .icon-btn:disabled{opacity:0.3;cursor:default;pointer-events:none}
@@ -261,11 +260,7 @@
 
     // Header
     h+='<div class="header">';
-    h+='<div class="hdr-left">';
     h+='<button class="nav-btn" onclick="W.prev()">\u2039</button>';
-    h+='<button class="icon-btn"'+(undoStack.length?'':' disabled')+' onclick="W.undo()" title="Undo"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M5 3.5L2.5 6l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 6H9a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>';
-    h+='<button class="icon-btn"'+(redoStack.length?'':' disabled')+' onclick="W.redo()" title="Redo"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M10 3.5L12.5 6 10 8.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 6H6a3.5 3.5 0 0 0 0 7H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>';
-    h+='</div>';
     h+='<div class="month-title">'+MONTHS[cm]+' '+cy+'</div>';
     h+='<button class="nav-btn" onclick="W.next()">\u203A</button>';
     // Install button — absolutely positioned, no layout impact
@@ -321,6 +316,8 @@
       for(var d=1;d<=total;d++){if(!isWknd(cy,cm,d)&&!isHol(dk(cy,cm,d))){hasWd=true;if(getState(dk(cy,cm,d),cy,cm,d)!=='office'){allOfficeMth=false;}}}
       h+='<button class="act-btn'+(hasWd&&allOfficeMth?' act-on':'')+'" onclick="W.fillOffice()">\uD83C\uDFE2 All Office</button>';
       h+='<button class="act-btn" onclick="W.startReset()">Reset Month</button>';
+      h+='<button class="icon-btn"'+(undoStack.length?'':' disabled')+' onclick="W.undo()" title="Undo"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M5 3.5L2.5 6l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 6H9a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>';
+      h+='<button class="icon-btn"'+(redoStack.length?'':' disabled')+' onclick="W.redo()" title="Redo"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M10 3.5L12.5 6 10 8.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 6H6a3.5 3.5 0 0 0 0 7H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>';
       h+='</div>';
       h+='<div class="weekday-row">';
       var wdNames=['Mon','Tue','Wed','Thu','Fri'];
