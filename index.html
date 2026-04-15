@@ -65,6 +65,16 @@
 .day-cell.is-today{border-color:var(--today)!important;box-shadow:0 0 12px rgba(34,211,238,.3)}
 .day-cell.faded{opacity:.3}
 .day-cell.hol-dot::after{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:#f59e0b}
+.lock-ind{position:absolute;top:4px;left:4px;color:rgba(255,255,255,.55);line-height:1;pointer-events:none}
+.day-cell.is-locked{outline:2px solid rgba(255,255,255,.25);outline-offset:-2px}
+/* Lock prompt */
+.lock-prompt{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--sel-border);border-radius:14px;padding:16px 20px;text-align:center;width:90%;max-width:280px;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.7);animation:tipSlideUp .25s ease;pointer-events:all}
+.lock-prompt b{color:var(--text);display:block;margin-bottom:4px;font-size:0.85rem}
+.lock-prompt p{font-size:0.72rem;color:var(--text-muted);margin-bottom:14px}
+.lock-prompt-btns{display:flex;gap:8px}
+.lock-cancel-btn{flex:1;background:none;border:1px solid var(--sel-border);color:var(--text-muted);padding:8px;border-radius:8px;cursor:pointer;font-size:0.75rem;font-family:'DM Sans',sans-serif}
+.lock-do-btn{flex:1;border:none;color:#fff;padding:8px;border-radius:8px;cursor:pointer;font-size:0.75rem;font-weight:600;font-family:'DM Sans',sans-serif;background:#6366f1}
+.lock-do-btn.unlock{background:var(--danger)}
 .day-cell.hol-active{border-color:#f59e0b!important;box-shadow:0 0 10px rgba(245,158,11,.35)}
 
 /* Holiday popup */
@@ -126,7 +136,7 @@
 .stat-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 .stat-val{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700}
 
-@keyframes popIn{from{opacity:0;transform:translateX(-50%) scale(.9)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+@keyframes popIn{from{opacity:0}to{opacity:1}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes tipSlideUp{from{opacity:0;transform:translateX(-50%) translateY(24px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .panel{animation:fadeUp .3s ease}
@@ -174,6 +184,10 @@
   var deferredInstall = null;
   var installable = false;
   var showTip = false;
+  var locked = {};
+  var lockPromptKey = null;
+  var lpTimer = null;
+  var didLongPress = false;
 
   var VALID_STATES={office:1,wfh:1,off:1};
   var DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
@@ -194,11 +208,15 @@
         for(var k in raw){
           if(DATE_RE.test(k)&&VALID_STATES[raw[k]]) data[k]=raw[k];
         }
+        var rawL=p.locked||{};
+        for(var k in rawL){
+          if(DATE_RE.test(k)&&rawL[k]===true) locked[k]=true;
+        }
       }
     }catch(e){}
   }
   function save(){
-    try{localStorage.setItem('wfh_v2',JSON.stringify({data:data,target:target}));}catch(e){}
+    try{localStorage.setItem('wfh_v2',JSON.stringify({data:data,target:target,locked:locked}));}catch(e){}
   }
 
   function dk(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d);}
@@ -224,10 +242,13 @@
     if(isToday(y,m,d)) cls+=' is-today';
     if(hol) cls+=' hol-dot';
     if(hol&&popupKey===key) cls+=' hol-active';
+    if(!faded&&locked[key]) cls+=' is-locked';
 
-    var out='<div class="'+cls+'" onclick="W.tap(\''+key+'\','+y+','+m+','+d+')">';
+    var lp=faded?'':' ontouchstart="W.lps(\''+key+'\')" ontouchend="W.lpe()" ontouchcancel="W.lpe()" ontouchmove="W.lpe()" onmousedown="W.lps(\''+key+'\')" onmouseup="W.lpe()" onmouseleave="W.lpe()"';
+    var out='<div class="'+cls+'"'+lp+' onclick="W.tap(\''+key+'\','+y+','+m+','+d+')">';
     out+='<div class="day-num">'+d+'</div>';
     out+='<div class="day-lbl">'+LABELS[st]+'</div>';
+    if(!faded&&locked[key]) out+='<div class="lock-ind"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1.5" y="4.5" width="7" height="5" rx="1" fill="rgba(255,255,255,.6)"/><path d="M3 4.5V3a2 2 0 014 0v1.5" stroke="rgba(255,255,255,.6)" stroke-width="1.2" stroke-linecap="round"/></svg></div>';
     if(hol&&popupKey===key){
       var col=colOf(y,m,d);
       var anc=col<=1?'anc-left':col>=5?'anc-right':'anc-mid';
@@ -365,10 +386,29 @@
     h+='<div class="stat-row"><span class="stat-lbl"><span class="stat-dot" style="background:var(--accent)"></span>Working Days</span><span class="stat-val" style="color:var(--accent)">'+working+'</span></div>';
     h+='</div>';
 
+    // Lock prompt overlay
+    if(lockPromptKey){
+      var lkey=lockPromptKey;
+      var isLocked=!!locked[lkey];
+      var lparts=lkey.split('-');
+      var ly=parseInt(lparts[0],10),lm=parseInt(lparts[1],10)-1,ld=parseInt(lparts[2],10);
+      var lday=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(ly,lm,ld).getDay()];
+      h+='<div class="install-overlay" onclick="W.lockCancel()"></div>';
+      h+='<div class="lock-prompt">';
+      h+='<b>'+lday+', '+ld+' '+MONTHS[lm]+'</b>';
+      h+='<p>'+(isLocked?'Unlock this day?':'Lock this day to prevent accidental changes.')+'</p>';
+      h+='<div class="lock-prompt-btns">';
+      h+='<button class="lock-cancel-btn" onclick="W.lockCancel()">Cancel</button>';
+      h+='<button class="lock-do-btn'+(isLocked?' unlock':'')+'" onclick="W.lockConfirm(\''+lkey+'\')">'+(isLocked?'Unlock Day':'Lock Day')+'</button>';
+      h+='</div></div>';
+    }
+
     document.getElementById('app').innerHTML=h;
   }
 
   function tap(key,y,m,d){
+    if(didLongPress){didLongPress=false;return;}
+    if(locked[key]) return;
     pushUndo();
     var hol=isHol(key);
     if(hol){
@@ -439,6 +479,29 @@
   }
   function cancelReset(){confirming=false;render();}
 
+  function lps(key){
+    didLongPress=false;
+    clearTimeout(lpTimer);
+    lpTimer=setTimeout(function(){
+      didLongPress=true;
+      lockPromptKey=key;
+      render();
+    },550);
+  }
+  function lpe(){
+    clearTimeout(lpTimer);
+    lpTimer=null;
+  }
+  function lockConfirm(key){
+    if(locked[key]){delete locked[key];}else{locked[key]=true;}
+    lockPromptKey=null;
+    save();render();
+  }
+  function lockCancel(){
+    lockPromptKey=null;
+    render();
+  }
+
   function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;}
   function install(){
     if(deferredInstall){
@@ -457,7 +520,7 @@
     deferredInstall=null; installable=false; showTip=false; render();
   });
 
-  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,fillWeekday:fillWeekday,startReset:startReset,doReset:doReset,cancelReset:cancelReset,install:install,closeTip:closeTip,undo:undo,redo:redo};
+  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,fillWeekday:fillWeekday,startReset:startReset,doReset:doReset,cancelReset:cancelReset,install:install,closeTip:closeTip,undo:undo,redo:redo,lps:lps,lpe:lpe,lockConfirm:lockConfirm,lockCancel:lockCancel};
   load();
   // Show button on iOS Safari when not already installed
   if(isIOS()&&!navigator.standalone) installable=true;
