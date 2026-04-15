@@ -42,7 +42,8 @@
 .icon-btn:disabled{opacity:0.3;cursor:default;pointer-events:none}
 
 /* Legend */
-.legend{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.legend{display:flex;gap:6px;margin-bottom:14px;flex-wrap:nowrap;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
+.legend::-webkit-scrollbar{display:none}
 .legend-item{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-dim);background:var(--surface);padding:5px 10px;border-radius:8px;font-weight:500}
 .legend-lock-btn{border:1px solid var(--sel-border);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .15s,color .15s}
 .legend-lock-btn:active{border-color:#6366f1;color:#a5b4fc}
@@ -315,7 +316,7 @@
       h+='<div class="install-overlay" onclick="W.toggleLockTip()"></div>';
       h+='<div class="install-tip" style="border-color:#6366f1">';
       h+='<b style="color:#a5b4fc">Locking Days</b>';
-      h+='<span style="color:#c7d2fe">Long press any day for 0.5s to lock it. Locked days show a \uD83D\uDD12 icon and can\'t be changed by a normal tap. Long press again to unlock.</span>';
+      h+='<span style="color:#c7d2fe">Long press any day to lock it. Locked days show a \uD83D\uDD12 icon and can\'t be changed by a normal tap. Long press again to unlock.</span>';
       h+='</div>';
     }
 
