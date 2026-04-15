@@ -44,6 +44,8 @@
 /* Legend */
 .legend{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-dim);background:var(--surface);padding:5px 10px;border-radius:8px;font-weight:500}
+.legend-lock-btn{border:1px solid var(--sel-border);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .15s,color .15s}
+.legend-lock-btn:active{border-color:#6366f1;color:#a5b4fc}
 .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 .tap-hint{text-align:center;font-size:0.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic}
 
@@ -184,6 +186,7 @@
   var deferredInstall = null;
   var installable = false;
   var showTip = false;
+  var showLockTip = false;
   var locked = {};
   var lockPromptKey = null;
   var lpTimer = null;
@@ -305,10 +308,16 @@
     h+='<div class="legend-item"><div class="legend-dot" style="background:var(--wfh)"></div>WFH</div>';
     h+='<div class="legend-item"><div class="legend-dot" style="background:var(--off)"></div>Off</div>';
     h+='<div class="legend-item"><div class="legend-dot" style="background:#f59e0b;border-radius:50%"></div>Public Holiday</div>';
-    h+='<div class="legend-item"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="flex-shrink:0"><rect x="1.5" y="4.5" width="7" height="5" rx="1" fill="rgba(255,255,255,.65)"/><path d="M3 4.5V3a2 2 0 014 0v1.5" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/></svg>Locked</div>';
+    h+='<button class="legend-item legend-lock-btn" onclick="W.toggleLockTip()"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="flex-shrink:0"><rect x="1.5" y="4.5" width="7" height="5" rx="1" fill="rgba(255,255,255,.65)"/><path d="M3 4.5V3a2 2 0 014 0v1.5" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/></svg>Locked \u2139\uFE0F</button>';
     h+='</div>';
     h+='<div class="tap-hint">Tap a day to cycle: Select \u2192 Office \u2192 WFH \u2192 Off</div>';
-    h+='<div class="tap-hint" style="margin-top:3px">\uD83D\uDD12 Long press any day to lock &amp; unlock</div>';
+    if(showLockTip){
+      h+='<div class="install-overlay" onclick="W.toggleLockTip()"></div>';
+      h+='<div class="install-tip" style="border-color:#6366f1">';
+      h+='<b style="color:#a5b4fc">Locking Days</b>';
+      h+='<span style="color:#c7d2fe">Long press any day for 0.5s to lock it. Locked days show a \uD83D\uDD12 icon and can\'t be changed by a normal tap. Long press again to unlock.</span>';
+      h+='</div>';
+    }
 
     // Calendar
     h+='<div class="cal-grid">';
@@ -514,6 +523,7 @@
     }
   }
   function closeTip(){showTip=false;render();}
+  function toggleLockTip(){showLockTip=!showLockTip;render();}
 
   window.addEventListener('beforeinstallprompt',function(e){
     e.preventDefault(); deferredInstall=e; installable=true; render();
@@ -522,7 +532,7 @@
     deferredInstall=null; installable=false; showTip=false; render();
   });
 
-  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,fillWeekday:fillWeekday,startReset:startReset,doReset:doReset,cancelReset:cancelReset,install:install,closeTip:closeTip,undo:undo,redo:redo,lps:lps,lpe:lpe,lockConfirm:lockConfirm,lockCancel:lockCancel};
+  window.W={tap:tap,prev:prev,next:next,setTarget:setTarget,fillOffice:fillOffice,fillWeekday:fillWeekday,startReset:startReset,doReset:doReset,cancelReset:cancelReset,install:install,closeTip:closeTip,toggleLockTip:toggleLockTip,undo:undo,redo:redo,lps:lps,lpe:lpe,lockConfirm:lockConfirm,lockCancel:lockCancel};
   load();
   // Show button on iOS Safari when not already installed
   if(isIOS()&&!navigator.standalone) installable=true;
