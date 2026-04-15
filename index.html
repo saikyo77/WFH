@@ -55,7 +55,7 @@
 .day-hdr{text-align:center;font-size:0.68rem;font-weight:600;color:var(--text-muted);padding:2px 0 8px;text-transform:uppercase;letter-spacing:0.5px}
 .day-hdr.wknd{color:#5eead4;opacity:.7}
 
-.day-cell{aspect-ratio:1/1.1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:2px solid transparent;transition:transform 0.1s;position:relative;min-height:50px;user-select:none;overflow:visible}
+.day-cell{aspect-ratio:1/1.1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:2px solid transparent;transition:transform 0.1s;position:relative;min-height:50px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:visible}
 .day-cell:active{transform:scale(0.92)}
 .day-num{font-family:'JetBrains Mono',monospace;font-size:0.92rem;font-weight:700;line-height:1}
 .day-lbl{font-size:0.52rem;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;line-height:1;opacity:.9}
@@ -248,7 +248,7 @@
     if(hol&&popupKey===key) cls+=' hol-active';
     if(!faded&&locked[key]) cls+=' is-locked';
 
-    var lp=faded?'':' ontouchstart="W.lps(\''+key+'\')" ontouchend="W.lpe()" ontouchcancel="W.lpe()" ontouchmove="W.lpe()" onmousedown="W.lps(\''+key+'\')" onmouseup="W.lpe()" onmouseleave="W.lpe()"';
+    var lp=faded?'':' ontouchstart="W.lps(\''+key+'\')" ontouchend="W.lpe()" ontouchcancel="W.lpe()" ontouchmove="W.lpe()" onmousedown="W.lps(\''+key+'\')" onmouseup="W.lpe()" onmouseleave="W.lpe()" oncontextmenu="return false"';
     var out='<div class="'+cls+'"'+lp+' onclick="W.tap(\''+key+'\','+y+','+m+','+d+')">';
     out+='<div class="day-num">'+d+'</div>';
     out+='<div class="day-lbl">'+LABELS[st]+'</div>';
